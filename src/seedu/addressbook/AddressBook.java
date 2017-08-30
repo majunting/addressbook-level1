@@ -90,6 +90,9 @@ public class AddressBook {
     private static final String MESSAGE_STORAGE_FILE_CREATED = "Created new empty storage file: %1$s";
     private static final String MESSAGE_WELCOME = "Welcome to your Address Book!";
     private static final String MESSAGE_USING_DEFAULT_FILE = "Using default storage file : " + DEFAULT_STORAGE_FILEPATH;
+    private static final String MESSAGE_PERSON_IN_GROUP = "Found %1$d person in Group %2$s: ";
+    private static final String MESSAGE_INVALID_GROUP = "Group %1$s not found!";
+    private static final String MESSAGE_GROUP_DELETED = "Group %1$s deleted!";
 
     // These are the prefix strings to define the data type of a command parameter
     private static final String PERSON_DATA_PREFIX_PHONE = "p/";
