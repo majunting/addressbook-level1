@@ -65,13 +65,13 @@ public class AddressBook {
      * at which java String.format(...) method can insert values.
      * =========================================================================
      */
-    private static final String MESSAGE_ADDED = "New person added: %1$s, Phone: %2$s, Email: %3$s";
+    private static final String MESSAGE_ADDED = "New person added: %1$s, Phone: %2$s, Email: %3$s, Group: %4$s";
     private static final String MESSAGE_ADDRESSBOOK_CLEARED = "Address book has been cleared!";
     private static final String MESSAGE_COMMAND_HELP = "%1$s: %2$s";
     private static final String MESSAGE_COMMAND_HELP_PARAMETERS = "\tParameters: %1$s";
     private static final String MESSAGE_COMMAND_HELP_EXAMPLE = "\tExample: %1$s";
     private static final String MESSAGE_DELETE_PERSON_SUCCESS = "Deleted Person: %1$s";
-    private static final String MESSAGE_DISPLAY_PERSON_DATA = "%1$s  Phone Number: %2$s  Email: %3$s";
+    private static final String MESSAGE_DISPLAY_PERSON_DATA = "%1$s  Phone Number: %2$s  Email: %3$s Group: %4$s";
     private static final String MESSAGE_DISPLAY_LIST_ELEMENT_INDEX = "%1$d. ";
     private static final String MESSAGE_GOODBYE = "Exiting Address Book... Good bye!";
     private static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format: %1$s " + LS + "%2$s";
@@ -98,12 +98,13 @@ public class AddressBook {
 
     private static final String PERSON_STRING_REPRESENTATION = "%1$s " // name
                                                             + PERSON_DATA_PREFIX_PHONE + "%2$s " // phone
-                                                            + PERSON_DATA_PREFIX_EMAIL + "%3$s"; // email
+                                                            + PERSON_DATA_PREFIX_EMAIL + "%3$s " // email
+                                                            + PERSON_DATA_PREFIX_GROUP + "%4$s"; //group
     private static final String COMMAND_ADD_WORD = "add";
     private static final String COMMAND_ADD_DESC = "Adds a person to the address book.";
     private static final String COMMAND_ADD_PARAMETERS = "NAME "
                                                       + PERSON_DATA_PREFIX_PHONE + "PHONE_NUMBER "
-                                                      + PERSON_DATA_PREFIX_EMAIL + "EMAIL"
+                                                      + PERSON_DATA_PREFIX_EMAIL + "EMAIL "
                                                       + PERSON_DATA_PREFIX_GROUP + "GROUP";
     private static final String COMMAND_ADD_EXAMPLE = COMMAND_ADD_WORD + " John Doe p/98765432 e/johnd@gmail.com g/family";
 
@@ -442,7 +443,7 @@ public class AddressBook {
      */
     private static String getMessageForSuccessfulAddPerson(String[] addedPerson) {
         return String.format(MESSAGE_ADDED,
-                getNameFromPerson(addedPerson), getPhoneFromPerson(addedPerson), getEmailFromPerson(addedPerson));
+                getNameFromPerson(addedPerson), getPhoneFromPerson(addedPerson), getEmailFromPerson(addedPerson), getGroupFromPerson(addedPerson));
     }
 
     /**
@@ -672,7 +673,7 @@ public class AddressBook {
      */
     private static String getMessageForFormattedPersonData(String[] person) {
         return String.format(MESSAGE_DISPLAY_PERSON_DATA,
-                getNameFromPerson(person), getPhoneFromPerson(person), getEmailFromPerson(person));
+                getNameFromPerson(person), getPhoneFromPerson(person), getEmailFromPerson(person), getGroupFromPerson(person));
     }
 
     /**
@@ -864,6 +865,13 @@ public class AddressBook {
     }
 
     /**
+     * Returns given person's group
+     * @param person whose group you want
+     * @return
+     */
+    private static String getGroupFromPerson(String[] person) { return person[PERSON_DATA_INDEX_GROUP]; }
+
+    /**
      * Creates a person from the given data.
      *
      * @param name of person
@@ -888,7 +896,7 @@ public class AddressBook {
      */
     private static String encodePersonToString(String[] person) {
         return String.format(PERSON_STRING_REPRESENTATION,
-                getNameFromPerson(person), getPhoneFromPerson(person), getEmailFromPerson(person));
+                getNameFromPerson(person), getPhoneFromPerson(person), getEmailFromPerson(person), getGroupFromPerson(person));
     }
 
     /**
@@ -996,27 +1004,27 @@ public class AddressBook {
         final int indexOfGroupPrefix = encoded.indexOf(PERSON_DATA_INDEX_GROUP);
 
         // phone is last arg, target is from prefix to end of string
-        if (indexOfPhonePrefix > indexOfEmailPrefix || indexOfPhonePrefix > indexOfGroupPrefix) {
+        if (indexOfPhonePrefix > indexOfEmailPrefix && indexOfPhonePrefix > indexOfGroupPrefix) {
             return removePrefixSign(encoded.substring(indexOfPhonePrefix, encoded.length()).trim(),
                     PERSON_DATA_PREFIX_PHONE);
 
-        // phone is middle arg, target is from own prefix to next prefix
         } else {
-            if((indexOfPhonePrefix < indexOfEmailPrefix && indexOfPhonePrefix > indexOfGroupPrefix) || (indexOfPhonePrefix < indexOfGroupPrefix && indexOfPhonePrefix > indexOfEmailPrefix)) {
-                return removePrefixSign(
-                        encoded.substring(indexOfPhonePrefix, encoded.length()).trim(),
-                        PERSON_DATA_PREFIX_PHONE);
-            }
-            else{ // phone is first arg, target is from own prefix to next prefix
+            // phone is first arg, target is from own prefix to middle prefix
+            if(indexOfPhonePrefix < indexOfEmailPrefix && indexOfPhonePrefix < indexOfGroupPrefix){
                 if(indexOfEmailPrefix > indexOfGroupPrefix){
-                    return removePrefixSign(
-                            encoded.substring(indexOfPhonePrefix, indexOfGroupPrefix).trim(),
-                            PERSON_DATA_PREFIX_PHONE);
+                    return removePrefixSign(encoded.substring(indexOfPhonePrefix, indexOfGroupPrefix).trim(),
+                        PERSON_DATA_PREFIX_PHONE);
+                } else {
+                    return removePrefixSign(encoded.substring(indexOfPhonePrefix, indexOfEmailPrefix).trim(),
+                        PERSON_DATA_PREFIX_PHONE);
                 }
-                else{
-                    return removePrefixSign(
-                            encoded.substring(indexOfPhonePrefix, indexOfEmailPrefix).trim(),
-                            PERSON_DATA_PREFIX_PHONE);
+            } else { //phone is middle arg, target is from own prefix to last prefix
+                if(indexOfPhonePrefix < indexOfGroupPrefix){
+                    return removePrefixSign(encoded.substring(indexOfPhonePrefix, indexOfGroupPrefix).trim(),
+                        PERSON_DATA_PREFIX_PHONE);
+                } else {
+                    return removePrefixSign(encoded.substring(indexOfPhonePrefix, indexOfEmailPrefix).trim(),
+                        PERSON_DATA_PREFIX_PHONE);
                 }
             }
         }
@@ -1031,21 +1039,66 @@ public class AddressBook {
     private static String extractEmailFromPersonString(String encoded) {
         final int indexOfPhonePrefix = encoded.indexOf(PERSON_DATA_PREFIX_PHONE);
         final int indexOfEmailPrefix = encoded.indexOf(PERSON_DATA_PREFIX_EMAIL);
+        final int indexOfGroupPrefix = encoded.indexOf(PERSON_DATA_PREFIX_GROUP);
 
         // email is last arg, target is from prefix to end of string
-        if (indexOfEmailPrefix > indexOfPhonePrefix) {
+        if (indexOfEmailPrefix > indexOfPhonePrefix && indexOfEmailPrefix > indexOfGroupPrefix) {
             return removePrefixSign(encoded.substring(indexOfEmailPrefix, encoded.length()).trim(),
                     PERSON_DATA_PREFIX_EMAIL);
 
-        // email is middle arg, target is from own prefix to next prefix
         } else {
-            return removePrefixSign(
-                    encoded.substring(indexOfEmailPrefix, indexOfPhonePrefix).trim(),
-                    PERSON_DATA_PREFIX_EMAIL);
+            // email is first arg, target is from own prefix to middle prefix
+            if(indexOfEmailPrefix < indexOfPhonePrefix && indexOfEmailPrefix < indexOfGroupPrefix){
+                if(indexOfPhonePrefix > indexOfGroupPrefix){
+                    return removePrefixSign(encoded.substring(indexOfEmailPrefix, indexOfGroupPrefix).trim(),
+                        PERSON_DATA_PREFIX_EMAIL);
+                } else {
+                    return removePrefixSign(encoded.substring(indexOfEmailPrefix, indexOfPhonePrefix).trim(),
+                        PERSON_DATA_PREFIX_EMAIL);
+                }
+            } else { //email is middle arg, target is from own prefix to last prefix
+                if(indexOfEmailPrefix < indexOfGroupPrefix){
+                    return removePrefixSign(encoded.substring(indexOfEmailPrefix, indexOfGroupPrefix).trim(),
+                        PERSON_DATA_PREFIX_EMAIL);
+                } else {
+                    return removePrefixSign(encoded.substring(indexOfEmailPrefix, indexOfPhonePrefix).trim(),
+                        PERSON_DATA_PREFIX_EMAIL);
+                }
+            }
         }
     }
 
+    private static String extractGroupFromPersonString(String encoded) {
+        final int indexOfPhonePrefix = encoded.indexOf(PERSON_DATA_PREFIX_PHONE);
+        final int indexOfEmailPrefix = encoded.indexOf(PERSON_DATA_PREFIX_EMAIL);
+        final int indexOfGroupPrefix = encoded.indexOf(PERSON_DATA_PREFIX_GROUP);
 
+        //group is last arg, target is from prefix to end of string
+        if(indexOfGroupPrefix > indexOfEmailPrefix && indexOfGroupPrefix > indexOfPhonePrefix){
+            return removePrefixSign(
+                    encoded.substring(indexOfGroupPrefix, encoded.length()).trim(),
+                    PERSON_DATA_PREFIX_GROUP);
+        } else {
+            // group is first arg, target is from own prefix to middle prefix
+            if(indexOfGroupPrefix < indexOfPhonePrefix && indexOfGroupPrefix < indexOfEmailPrefix){
+                if(indexOfPhonePrefix > indexOfEmailPrefix){
+                    return removePrefixSign(encoded.substring(indexOfGroupPrefix, indexOfEmailPrefix).trim(),
+                        PERSON_DATA_PREFIX_GROUP);
+                } else {
+                    return removePrefixSign(encoded.substring(indexOfGroupPrefix, indexOfPhonePrefix).trim(),
+                        PERSON_DATA_PREFIX_GROUP);
+                }
+            } else { //group is middle arg, target is from own prefix to last prefix
+                if(indexOfGroupPrefix < indexOfEmailPrefix){
+                    return removePrefixSign(encoded.substring(indexOfGroupPrefix, indexOfEmailPrefix).trim(),
+                        PERSON_DATA_PREFIX_GROUP);
+                } else {
+                    return removePrefixSign(encoded.substring(indexOfGroupPrefix, indexOfPhonePrefix).trim(),
+                        PERSON_DATA_PREFIX_GROUP);
+                }
+            }
+        }
+    }
 
     /**
      * Returns true if the given person's data fields are valid
@@ -1099,7 +1152,7 @@ public class AddressBook {
     }
 
     private static boolean isPersonGroupValid(String group){
-        return group.matches( "(\\w|\\s)+"); //group is nonempty mixture of alphabets and whitespace
+        return group.matches( "(\\w|\\s|\\d)+"); //group is nonempty mixture of alphabets, numbers and whitespace
     }
 
 
