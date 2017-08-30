@@ -1055,7 +1055,8 @@ public class AddressBook {
     private static boolean isPersonDataValid(String[] person) {
         return isPersonNameValid(person[PERSON_DATA_INDEX_NAME])
                 && isPersonPhoneValid(person[PERSON_DATA_INDEX_PHONE])
-                && isPersonEmailValid(person[PERSON_DATA_INDEX_EMAIL]);
+                && isPersonEmailValid(person[PERSON_DATA_INDEX_EMAIL])
+                && isPersonGroupValid(person[PERSON_DATA_INDEX_GROUP]);
     }
 
     /*
@@ -1095,6 +1096,10 @@ public class AddressBook {
     private static boolean isPersonEmailValid(String email) {
         return email.matches("\\S+@\\S+\\.\\S+"); // email is [non-whitespace]@[non-whitespace].[non-whitespace]
         //TODO: implement a more permissive validation
+    }
+
+    private static boolean isPersonGroupValid(String group){
+        return group.matches( "(\\w|\\s)+"); //group is nonempty mixture of alphabets and whitespace
     }
 
 
