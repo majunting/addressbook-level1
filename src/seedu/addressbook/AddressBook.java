@@ -90,9 +90,9 @@ public class AddressBook {
     private static final String MESSAGE_STORAGE_FILE_CREATED = "Created new empty storage file: %1$s";
     private static final String MESSAGE_WELCOME = "Welcome to your Address Book!";
     private static final String MESSAGE_USING_DEFAULT_FILE = "Using default storage file : " + DEFAULT_STORAGE_FILEPATH;
-    private static final String MESSAGE_PERSON_IN_GROUP = "Found %1$d person in Group %2$s: ";
-    private static final String MESSAGE_INVALID_GROUP = "Group %1$s not found!";
-    private static final String MESSAGE_GROUP_DELETED = "Group %1$s deleted!";
+//    private static final String MESSAGE_PERSON_IN_GROUP = "Found %1$d person in Group %2$s: ";
+//    private static final String MESSAGE_INVALID_GROUP = "Group %1$s not found!";
+//    private static final String MESSAGE_GROUP_DELETED = "Group %1$s deleted!";
 
     // These are the prefix strings to define the data type of a command parameter
     private static final String PERSON_DATA_PREFIX_PHONE = "p/";
@@ -116,6 +116,12 @@ public class AddressBook {
                                         + "keywords (case-sensitive) and displays them as a list with index numbers.";
     private static final String COMMAND_FIND_PARAMETERS = "KEYWORD [MORE_KEYWORDS]";
     private static final String COMMAND_FIND_EXAMPLE = COMMAND_FIND_WORD + " alice bob charlie";
+
+    private static final String COMMAND_FINDGROUP = "findGroup";
+    private static final String COMMAND_FINDGROUP_DESC = "Finds all persons who are in the specified group "
+                                        + "(case-sensitive) and displays them as a list with index numbers.";
+    private static final String COMMAND_FINDGROUP_PARAMETERS = "GROUPNAME";
+    private static final String COMMAND_FINDGROUP_EXAMPLES = COMMAND_FINDGROUP + " family";
 
     private static final String COMMAND_LIST_WORD = "list";
     private static final String COMMAND_LIST_DESC = "Displays all persons as a list with index numbers.";
@@ -378,6 +384,8 @@ public class AddressBook {
         switch (commandType) {
         case COMMAND_ADD_WORD:
             return executeAddPerson(commandArgs);
+        case COMMAND_FINDGROUP:
+            return executeFindGroup(commandArgs);
         case COMMAND_FIND_WORD:
             return executeFindPersons(commandArgs);
         case COMMAND_LIST_WORD:
@@ -450,6 +458,16 @@ public class AddressBook {
     }
 
     /**
+     *
+     */
+    private static String executeFindGroup(String commandArgs) {
+        final Set<String> keywords = extractKeywordsFromFindPersonArgs(commandArgs);
+        final ArrayList<String[]> personsFound = getPersonsInGroup(keywords);
+        showToUser(personsFound);
+        return getMessageForPersonsDisplayedSummary(personsFound);
+    }
+
+    /**
      * Finds and lists all persons in address book whose name contains any of the argument keywords.
      * Keyword matching is case sensitive.
      *
@@ -494,6 +512,17 @@ public class AddressBook {
         for (String[] person : getAllPersonsInAddressBook()) {
             final Set<String> wordsInName = new HashSet<>(splitByWhitespace(getNameFromPerson(person)));
             if (!Collections.disjoint(wordsInName, keywords)) {
+                matchedPersons.add(person);
+            }
+        }
+        return matchedPersons;
+    }
+
+    private static ArrayList<String[]> getPersonsInGroup(Collection<String> keyword) {
+        final ArrayList<String[]> matchedPersons = new ArrayList<>();
+        for(String[] person : getAllPersonsInAddressBook()){
+            final Set<String> wordsInGroup = new HashSet<>(splitByWhitespace(getGroupFromPerson(person)));
+            if(!Collections.disjoint(wordsInGroup, keyword)){
                 matchedPersons.add(person);
             }
         }
@@ -1169,6 +1198,7 @@ public class AddressBook {
     private static String getUsageInfoForAllCommands() {
         return getUsageInfoForAddCommand() + LS
                 + getUsageInfoForFindCommand() + LS
+                + getUsageInfoForFindGroupCommand() + LS
                 + getUsageInfoForViewCommand() + LS
                 + getUsageInfoForDeleteCommand() + LS
                 + getUsageInfoForClearCommand() + LS
@@ -1188,6 +1218,13 @@ public class AddressBook {
         return String.format(MESSAGE_COMMAND_HELP, COMMAND_FIND_WORD, COMMAND_FIND_DESC) + LS
                 + String.format(MESSAGE_COMMAND_HELP_PARAMETERS, COMMAND_FIND_PARAMETERS) + LS
                 + String.format(MESSAGE_COMMAND_HELP_EXAMPLE, COMMAND_FIND_EXAMPLE) + LS;
+    }
+
+    /** Returns the string for showing 'findGroup' command usage instruction */
+    private static String getUsageInfoForFindGroupCommand() {
+        return String.format(MESSAGE_COMMAND_HELP, COMMAND_FINDGROUP, COMMAND_FINDGROUP_DESC) + LS
+                + String.format(MESSAGE_COMMAND_HELP_PARAMETERS, COMMAND_FINDGROUP_PARAMETERS) + LS
+                + String.format(MESSAGE_COMMAND_HELP_EXAMPLE, COMMAND_FINDGROUP_EXAMPLES) + LS;
     }
 
     /** Returns the string for showing 'delete' command usage instruction */
